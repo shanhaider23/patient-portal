@@ -11,16 +11,28 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await api.post("/auth/login", { email, password });
-      login(res.data.token);
-      router.push("/patients");
-    } catch {
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    const res = await api.post("/auth/login", { email, password });
+    login(res.data.token);
+    router.push("/patients");
+  } catch (err) {
+    // Narrow the error type to AxiosError if possible
+    if (typeof err === 'object' && err !== null && 'response' in err) {
+      
+      setError(err.response?.data?.error || "Invalid credentials");
+      // or better with explicit cast if using axios types:
+      // const axiosErr = err as AxiosError;
+      // setError(axiosErr.response?.data?.error || "Invalid credentials");
+      console.error("Login error response:", err.response);
+    } else {
       setError("Invalid credentials");
+      console.error("Login error", err);
     }
-  };
+  }
+};
+;
 
   return (
     <div className="flex justify-center items-center h-screen">

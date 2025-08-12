@@ -1,12 +1,9 @@
-// src/db.ts
 import sqlite3 from 'sqlite3';
 import path from 'path';
-import { promisify } from 'util';
 import bcrypt from 'bcrypt';
 
 const DB_FILE = path.join(__dirname, 'patients.sqlite3');
 
-// Open DB (serialized to avoid concurrency issues with sqlite3)
 const sqlite = sqlite3.verbose();
 const rawDb = new sqlite.Database(DB_FILE);
 
@@ -39,8 +36,7 @@ function all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
   });
 }
 
-// Initialize schema and seed
-async function init() {
+export async function init() {
   await run(`PRAGMA foreign_keys = ON;`);
   await run(`
     CREATE TABLE IF NOT EXISTS users (
@@ -74,11 +70,6 @@ async function init() {
     await run(psql, ['Bob', 'Baker', 'bob@example.com', '+4511122233', '1990-01-05']);
   }
 }
-
-init().catch(err => {
-  console.error('Failed to initialize DB', err);
-  process.exit(1);
-});
 
 export default {
   raw: rawDb,

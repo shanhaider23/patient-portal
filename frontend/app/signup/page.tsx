@@ -18,7 +18,7 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/auth/signup", {
+      const res = await fetch("http://localhost:4000/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

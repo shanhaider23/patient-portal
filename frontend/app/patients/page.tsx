@@ -18,7 +18,9 @@ export default function PatientsPage() {
 
   const fetchPatients = async () => {
     const res = await api.get("/patients");
-    setPatients(res.data);
+    console.log("Fetched patients:", res.data);
+    
+    setPatients(res.data.data);
   };
 
   const deletePatient = async (id: number) => {

@@ -1,35 +1,8 @@
-// src/routes/auth.ts
 import express from "express";
 import db from "../db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { SECRET } from "../middleware/auth";
-
-interface User {
-  id: number;
-  email: string;
-  passwordHash: string;
-  role: "admin" | "user";
-}
-
-// Initialize users as empty array
-const users: User[] = [];
-
-// Async function to populate users with hashed passwords
-export async function initializeUsers() {
-  users.push({
-    id: 1,
-    email: "admin@example.com",
-    passwordHash: await bcrypt.hash("adminpassword", 10),
-    role: "admin",
-  });
-  users.push({
-    id: 2,
-    email: "user@example.com",
-    passwordHash: await bcrypt.hash("userpassword", 10),
-    role: "user",
-  });
-}
 
 const router = express.Router();
 
@@ -39,19 +12,21 @@ router.post("/signup", async (req, res) => {
   if (!email || !password || !role) {
     return res.status(400).json({ message: "Missing required fields" });
   }
-  const existingUser = users.find((u) => u.email === email);
-  if (existingUser) {
-    return res.status(409).json({ message: "Email already exists" });
+  try {
+    const existingUser = await db.get("SELECT id FROM users WHERE email = ?", [email]);
+    if (existingUser) {
+      return res.status(409).json({ message: "Email already exists" });
+    }
+    const passwordHash = await bcrypt.hash(password, 10);
+    await db.run(
+      "INSERT INTO users (email, passwordHash, role) VALUES (?, ?, ?)",
+      [email, passwordHash, role === "admin" ? "admin" : "user"]
+    );
+    res.status(201).json({ message: "User created" });
+  } catch (err) {
+    console.error("Signup error", err);
+    res.status(500).json({ message: "Internal server error" });
   }
-  const passwordHash = await bcrypt.hash(password, 10);
-  const newUser = {
-    id: users.length + 1,
-    email,
-    passwordHash,
-    role: role === "admin" ? "admin" : "user",
-  };
-  users.push(newUser);
-  res.status(201).json({ message: "User created" });
 });
 
 // Login endpoint
@@ -66,17 +41,13 @@ router.post("/login", async (req, res) => {
       email: string;
       passwordHash: string;
       role: string;
-    }>("SELECT id, email, passwordHash, role FROM users WHERE email = ?", [
-      email,
-    ]);
+    }>(
+      "SELECT id, email, passwordHash, role FROM users WHERE email = ?",
+      [email]
+    );
     if (!user) return res.status(401).json({ error: "Invalid email or password" });
 
-    if (!user.passwordHash) {
-      console.error(`User ${email} missing passwordHash`);
-      return res.status(500).json({ error: "User account misconfigured" });
-    }
-
-    const ok = bcrypt.compareSync(password, user.passwordHash); // sync ok here for simplicity
+    const ok = bcrypt.compareSync(password, user.passwordHash);
     if (!ok) return res.status(401).json({ error: "Invalid email or password" });
 
     const token = jwt.sign(
