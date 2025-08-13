@@ -149,8 +149,9 @@ export default function PatientsPage() {
                 {/* Selected Patient Info */}
                 {selectedPatient && (
                     <div
-                        className={`mt-6 p-4 m-4 bg-zinc-800 rounded-lg animate-fadeIn ${!sidebarOpen && "hidden"
-                            }`}
+                        className={`bg-zinc-800 rounded-lg animate-fadeIn transition-all duration-300
+            ${sidebarOpen ? "mt-6 p-4 m-4" : "mt-2 p-1 m-1"}
+        `}
                     >
                         <div className="flex flex-col items-center">
                             <img
@@ -159,20 +160,24 @@ export default function PatientsPage() {
                                     `https://ui-avatars.com/api/?name=${selectedPatient.firstName}+${selectedPatient.lastName}&background=random`
                                 }
                                 alt="Profile"
-                                className="w-20 h-20 rounded-full border-2 border-zinc-600"
+                                className={`${sidebarOpen ? "w-32 h-32" : "w-12 h-12"} rounded-full object-cover transition-all duration-300`}
                             />
-                            <h3 className="mt-3 font-semibold">
-                                {selectedPatient.firstName} {selectedPatient.lastName}
-                            </h3>
-                            <p className="text-sm text-zinc-400">{selectedPatient.email}</p>
-                            <div className="mt-3 space-y-1 text-sm">
-                                <div className="flex items-center gap-2">
-                                    <Phone size={14} /> {selectedPatient.phoneNumber}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Calendar size={14} /> {selectedPatient.dob}
-                                </div>
-                            </div>
+                            {sidebarOpen && (
+                                <>
+                                    <h3 className="mt-3 font-semibold">
+                                        {selectedPatient.firstName} {selectedPatient.lastName}
+                                    </h3>
+                                    <p className="text-sm text-zinc-400">{selectedPatient.email}</p>
+                                    <div className="mt-3 space-y-1 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Phone size={14} /> {selectedPatient.phoneNumber}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Calendar size={14} /> {selectedPatient.dob}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
