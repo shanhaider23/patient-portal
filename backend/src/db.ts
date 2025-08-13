@@ -53,7 +53,8 @@ export async function init() {
       lastName TEXT NOT NULL,
       email TEXT NOT NULL,
       phoneNumber TEXT,
-      dob TEXT
+      dob TEXT,
+      photo TEXT
     );
   `);
 

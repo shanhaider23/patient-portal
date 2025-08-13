@@ -34,8 +34,16 @@ export default function PatientsPage() {
     const [formPatient, setFormPatient] = useState<Partial<Patient> | null>(null);
     const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
 
     const router = useRouter();
+
+    // Collapse sidebar on small screens initially
+    useEffect(() => {
+        if (window.innerWidth < 1024) {
+            setSidebarOpen(false);
+        }
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -74,12 +82,16 @@ export default function PatientsPage() {
         }
 
         try {
+
             if (formPatient.id) {
                 await api.put(`/patients/${formPatient.id}`, formPatient);
             } else {
+                console.log("Saving new patient:", formPatient);
                 await api.post("/patients", formPatient);
             }
+
             setFormPatient(null);
+            setPhotoFile(null);
             fetchPatients();
         } catch (error) {
             console.error("Failed to save patient", error);
@@ -102,7 +114,7 @@ export default function PatientsPage() {
         <div className="flex min-h-screen bg-zinc-50">
             {/* Sidebar */}
             <aside
-                className={`bg-zinc-900 text-white flex flex-col shadow-xl transition-all duration-300 ${sidebarOpen ? "w-72" : "w-20"
+                className={`bg-zinc-900 text-white flex flex-col shadow-xl transition-all duration-300 h-screen fixed lg:static z-50 ${sidebarOpen ? "w-72" : "w-20"
                     }`}
             >
                 {/* Top bar */}
@@ -120,44 +132,39 @@ export default function PatientsPage() {
                     </button>
                 </div>
 
-
-                {/* Menu */}
-                <nav className="flex-1 p-4 space-y-3">
-
-                    {/* Selected Patient Info */}
-                    {selectedPatient && (
-                        <div
-                            className={`mt-6 p-4 bg-zinc-800 rounded-lg animate-fadeIn ${!sidebarOpen && "hidden"
-                                }`}
-                        >
-                            <div className="flex flex-col items-center">
-                                <img
-                                    src={
-                                        selectedPatient.photoUrl ||
-                                        `https://ui-avatars.com/api/?name=${selectedPatient.firstName}+${selectedPatient.lastName}&background=random`
-                                    }
-                                    alt="Profile"
-                                    className="w-20 h-20 rounded-full border-2 border-zinc-600"
-                                />
-                                <h3 className="mt-3 font-semibold">
-                                    {selectedPatient.firstName} {selectedPatient.lastName}
-                                </h3>
-                                <p className="text-sm text-zinc-400">{selectedPatient.email}</p>
-                                <div className="mt-3 space-y-1 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <Phone size={14} /> {selectedPatient.phoneNumber}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Calendar size={14} /> {selectedPatient.dob}
-                                    </div>
+                {/* Selected Patient Info */}
+                {selectedPatient && (
+                    <div
+                        className={`mt-6 p-4 bg-zinc-800 rounded-lg animate-fadeIn ${!sidebarOpen && "hidden"
+                            }`}
+                    >
+                        <div className="flex flex-col items-center">
+                            <img
+                                src={
+                                    selectedPatient.photoUrl ||
+                                    `https://ui-avatars.com/api/?name=${selectedPatient.firstName}+${selectedPatient.lastName}&background=random`
+                                }
+                                alt="Profile"
+                                className="w-20 h-20 rounded-full border-2 border-zinc-600"
+                            />
+                            <h3 className="mt-3 font-semibold">
+                                {selectedPatient.firstName} {selectedPatient.lastName}
+                            </h3>
+                            <p className="text-sm text-zinc-400">{selectedPatient.email}</p>
+                            <div className="mt-3 space-y-1 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Phone size={14} /> {selectedPatient.phoneNumber}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Calendar size={14} /> {selectedPatient.dob}
                                 </div>
                             </div>
                         </div>
-                    )}
-                </nav>
+                    </div>
+                )}
 
                 {/* Logout */}
-                <div className="p-4 border-t border-zinc-800">
+                <div className="mt-auto p-4 border-t border-zinc-800">
                     <button
                         onClick={handleLogout}
                         className="flex items-center gap-2 w-full p-2 rounded bg-red-600 hover:bg-red-700 transition"
@@ -168,7 +175,7 @@ export default function PatientsPage() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-6">
+            <main className="flex-1 p-6 lg:ml-0 ml-20">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold text-zinc-800">Patients</h1>
                     {user?.role === "admin" && (
@@ -218,7 +225,7 @@ export default function PatientsPage() {
                                 onChange={(e) =>
                                     setFormPatient({
                                         ...formPatient,
-                                        phoneNumber: e.target.value
+                                        phoneNumber: e.target.value,
                                     })
                                 }
                             />
@@ -230,6 +237,11 @@ export default function PatientsPage() {
                                     setFormPatient({ ...formPatient, dob: e.target.value })
                                 }
                             />
+                            <input
+                                type="file"
+                                className="border p-2 rounded focus:ring-2 focus:ring-blue-300"
+                                onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                            />
                         </div>
                         <div className="mt-4 flex gap-2">
                             <button
@@ -239,7 +251,10 @@ export default function PatientsPage() {
                                 {formPatient.id ? "Update" : "Add"}
                             </button>
                             <button
-                                onClick={() => setFormPatient(null)}
+                                onClick={() => {
+                                    setFormPatient(null);
+                                    setPhotoFile(null);
+                                }}
                                 className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition"
                             >
                                 Cancel
@@ -252,7 +267,7 @@ export default function PatientsPage() {
                     <p>Loading patients...</p>
                 ) : (
                     <div className="overflow-x-auto bg-white rounded-lg shadow-md">
-                        <table className="min-w-full">
+                        <table className="min-w-full table-auto">
                             <thead className="bg-zinc-100 text-zinc-700">
                                 <tr>
                                     <th className="px-4 py-2 text-left">Name</th>
@@ -271,7 +286,7 @@ export default function PatientsPage() {
                                         className="border-b hover:bg-blue-50 cursor-pointer transition"
                                         onClick={() => setSelectedPatient(patient)}
                                     >
-                                        <td className="px-4 py-2 ">
+                                        <td className="px-4 py-2">
                                             <div className="flex items-center gap-2">
                                                 <User size={16} /> {patient.firstName} {patient.lastName}
                                             </div>
@@ -281,13 +296,15 @@ export default function PatientsPage() {
                                                 <Mail size={16} /> {patient.email}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-2 ">
-                                            <div className="flex items-center gap-2"><Phone size={16} /> {patient.phoneNumber}</div>
-
+                                        <td className="px-4 py-2">
+                                            <div className="flex items-center gap-2">
+                                                <Phone size={16} /> {patient.phoneNumber}
+                                            </div>
                                         </td>
-                                        <td className="px-4 py-2 ">
-                                            <div className="flex items-center gap-2"> <Calendar size={16} /> {patient.dob}</div>
-
+                                        <td className="px-4 py-2">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar size={16} /> {patient.dob}
+                                            </div>
                                         </td>
                                         {user?.role === "admin" && (
                                             <td className="px-4 py-2 flex gap-2 justify-center">
