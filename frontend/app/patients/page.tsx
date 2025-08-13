@@ -13,6 +13,8 @@ import {
     Edit,
     Trash2,
     PlusCircle,
+    Menu,
+    ChevronLeft
 } from "lucide-react";
 
 interface Patient {
@@ -22,6 +24,7 @@ interface Patient {
     email: string;
     phoneNumber: string;
     dob: string;
+    photoUrl?: string;
 }
 
 export default function PatientsPage() {
@@ -29,6 +32,8 @@ export default function PatientsPage() {
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(false);
     const [formPatient, setFormPatient] = useState<Partial<Patient> | null>(null);
+    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     const router = useRouter();
 
@@ -41,7 +46,6 @@ export default function PatientsPage() {
         setLoading(true);
         try {
             const res = await api.get("/patients");
-            console.log("Fetched patients:", res.data.data);
             setPatients(res.data.data || []);
         } catch (error) {
             console.error("Failed to fetch patients", error);
@@ -55,6 +59,7 @@ export default function PatientsPage() {
         try {
             await api.delete(`/patients/${id}`);
             fetchPatients();
+            if (selectedPatient?.id === id) setSelectedPatient(null);
         } catch (error) {
             console.error("Failed to delete patient", error);
         }
@@ -85,13 +90,8 @@ export default function PatientsPage() {
         setFormPatient(patient);
     };
 
-    const cancelForm = () => {
-        setFormPatient(null);
-    };
-
     useEffect(() => {
         if (user) {
-            console.log("User role:", user);
             fetchPatients();
         } else {
             setPatients([]);
@@ -101,27 +101,68 @@ export default function PatientsPage() {
     return (
         <div className="flex min-h-screen bg-zinc-50">
             {/* Sidebar */}
-            <aside className="w-64 bg-zinc-900 text-white flex flex-col shadow-lg">
-                <div className="p-6 border-b border-zinc-800">
-                    <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-zinc-700 rounded-full flex items-center justify-center text-2xl">
-                            {user?.name?.[0]}
-                        </div>
-                        <h2 className="mt-3 font-semibold">{user?.name}</h2>
-                        <p className="text-sm text-zinc-400">{user?.email}</p>
-                    </div>
-                </div>
-                <nav className="flex-1 p-4 space-y-3">
-                    <button className="flex items-center gap-2 p-2 rounded hover:bg-zinc-800 w-full transition">
-                        🏥 Patients
+            <aside
+                className={`bg-zinc-900 text-white flex flex-col shadow-xl transition-all duration-300 ${sidebarOpen ? "w-72" : "w-20"
+                    }`}
+            >
+                {/* Top bar */}
+                <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+                    {sidebarOpen && (
+                        <h2 className="text-lg font-semibold transition-opacity duration-300">
+                            Patient Details
+                        </h2>
+                    )}
+                    <button
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        className="p-2 rounded hover:bg-zinc-800 transition"
+                    >
+                        {sidebarOpen ? <ChevronLeft size={20} /> : <Menu size={20} />}
                     </button>
+                </div>
+
+
+                {/* Menu */}
+                <nav className="flex-1 p-4 space-y-3">
+
+                    {/* Selected Patient Info */}
+                    {selectedPatient && (
+                        <div
+                            className={`mt-6 p-4 bg-zinc-800 rounded-lg animate-fadeIn ${!sidebarOpen && "hidden"
+                                }`}
+                        >
+                            <div className="flex flex-col items-center">
+                                <img
+                                    src={
+                                        selectedPatient.photoUrl ||
+                                        `https://ui-avatars.com/api/?name=${selectedPatient.firstName}+${selectedPatient.lastName}&background=random`
+                                    }
+                                    alt="Profile"
+                                    className="w-20 h-20 rounded-full border-2 border-zinc-600"
+                                />
+                                <h3 className="mt-3 font-semibold">
+                                    {selectedPatient.firstName} {selectedPatient.lastName}
+                                </h3>
+                                <p className="text-sm text-zinc-400">{selectedPatient.email}</p>
+                                <div className="mt-3 space-y-1 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <Phone size={14} /> {selectedPatient.phoneNumber}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Calendar size={14} /> {selectedPatient.dob}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </nav>
+
+                {/* Logout */}
                 <div className="p-4 border-t border-zinc-800">
                     <button
                         onClick={handleLogout}
                         className="flex items-center gap-2 w-full p-2 rounded bg-red-600 hover:bg-red-700 transition"
                     >
-                        <LogOut size={18} /> Logout
+                        <LogOut size={18} /> {sidebarOpen && "Logout"}
                     </button>
                 </div>
             </aside>
@@ -177,7 +218,7 @@ export default function PatientsPage() {
                                 onChange={(e) =>
                                     setFormPatient({
                                         ...formPatient,
-                                        phoneNumber: e.target.value,
+                                        phoneNumber: e.target.value
                                     })
                                 }
                             />
@@ -198,7 +239,7 @@ export default function PatientsPage() {
                                 {formPatient.id ? "Update" : "Add"}
                             </button>
                             <button
-                                onClick={cancelForm}
+                                onClick={() => setFormPatient(null)}
                                 className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition"
                             >
                                 Cancel
@@ -225,21 +266,45 @@ export default function PatientsPage() {
                             </thead>
                             <tbody>
                                 {patients.map((patient) => (
-                                    <tr key={patient.id} className="border-b">
-                                        <td className="px-4 py-2"><div className="flex items-center gap-2"><User size={16} />{patient.firstName} {patient.lastName}</div></td>
-                                        <td className="px-4 py-2"><div className="flex items-center gap-2"><Mail size={16} /> {patient.email}</div></td>
-                                        <td className="px-4 py-2"><div className="flex items-center gap-2"> <Phone size={16} />  {patient.phoneNumber}</div></td>
-                                        <td className="px-4 py-2"><div className="flex items-center gap-2"> <Calendar size={16} />{patient.dob}</div></td>
+                                    <tr
+                                        key={patient.id}
+                                        className="border-b hover:bg-blue-50 cursor-pointer transition"
+                                        onClick={() => setSelectedPatient(patient)}
+                                    >
+                                        <td className="px-4 py-2 ">
+                                            <div className="flex items-center gap-2">
+                                                <User size={16} /> {patient.firstName} {patient.lastName}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-2">
+                                            <div className="flex items-center gap-2">
+                                                <Mail size={16} /> {patient.email}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-2 ">
+                                            <div className="flex items-center gap-2"><Phone size={16} /> {patient.phoneNumber}</div>
+
+                                        </td>
+                                        <td className="px-4 py-2 ">
+                                            <div className="flex items-center gap-2"> <Calendar size={16} /> {patient.dob}</div>
+
+                                        </td>
                                         {user?.role === "admin" && (
                                             <td className="px-4 py-2 flex gap-2 justify-center">
                                                 <button
-                                                    onClick={() => editPatient(patient)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        editPatient(patient);
+                                                    }}
                                                     className="bg-yellow-400 text-black px-2 py-1 rounded hover:bg-yellow-500 transition"
                                                 >
                                                     <Edit size={16} />
                                                 </button>
                                                 <button
-                                                    onClick={() => deletePatient(patient.id)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deletePatient(patient.id);
+                                                    }}
                                                     className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition"
                                                 >
                                                     <Trash2 size={16} />
@@ -250,7 +315,6 @@ export default function PatientsPage() {
                                 ))}
                             </tbody>
                         </table>
-
                     </div>
                 )}
             </main>
