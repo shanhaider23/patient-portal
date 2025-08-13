@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
+import Image from "next/image";
 import {
     Calendar,
     User,
@@ -154,13 +155,16 @@ export default function PatientsPage() {
         `}
                     >
                         <div className="flex flex-col items-center">
-                            <img
+                            <Image
                                 src={
                                     selectedPatient.photoUrl ||
                                     `https://ui-avatars.com/api/?name=${selectedPatient.firstName}+${selectedPatient.lastName}&background=random`
                                 }
                                 alt="Profile"
-                                className={`${sidebarOpen ? "w-32 h-32" : "w-12 h-12"} rounded-full object-cover transition-all duration-300`}
+                                width={sidebarOpen ? 128 : 48}
+                                height={sidebarOpen ? 128 : 48}
+                                className="rounded-full object-cover transition-all duration-300"
+                                priority
                             />
                             {sidebarOpen && (
                                 <>
