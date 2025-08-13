@@ -20,7 +20,7 @@ function run(sql: string, params: any[] = []): Promise<RunResult> {
 
 function get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
   return new Promise((resolve, reject) => {
-    rawDb.get(sql, params, (err, row) => {
+    rawDb.get(sql, params, (err, row: T | undefined) => {
       if (err) return reject(err);
       resolve(row);
     });
@@ -29,7 +29,7 @@ function get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
 
 function all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
   return new Promise((resolve, reject) => {
-    rawDb.all(sql, params, (err, rows) => {
+    rawDb.all(sql, params, (err, rows: T[]) => {
       if (err) return reject(err);
       resolve(rows);
     });
@@ -53,8 +53,7 @@ export async function init() {
       lastName TEXT NOT NULL,
       email TEXT NOT NULL,
       phoneNumber TEXT,
-      dob TEXT,
-      photo TEXT
+      dob TEXT
     );
   `);
 
@@ -72,63 +71,9 @@ export async function init() {
   }
 }
 
-// Patients CRUD operations
-
-export async function createPatient(patient: {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber?: string;
-  dob?: string;
-}): Promise<number> {
-  const { firstName, lastName, email, phoneNumber, dob } = patient;
-  const result = await run(
-    `INSERT INTO patients (firstName, lastName, email, phoneNumber, dob) VALUES (?, ?, ?, ?, ?)`,
-    [firstName, lastName, email, phoneNumber || null, dob || null]
-  );
-  return result.lastID!;
-}
-
-export async function getAllPatients() {
-  return await all(`SELECT * FROM patients ORDER BY id DESC`);
-}
-
-export async function getPatientById(id: number) {
-  return await get(`SELECT * FROM patients WHERE id = ?`, [id]);
-}
-
-export async function updatePatient(id: number, patient: Partial<{
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  dob: string;
-}>) {
-  const fields = Object.keys(patient);
-  if (fields.length === 0) throw new Error('No fields to update');
-
-  const setString = fields.map(f => `${f} = ?`).join(', ');
-  const params = fields.map(f => (patient as any)[f]);
-  params.push(id);
-
-  const sql = `UPDATE patients SET ${setString} WHERE id = ?`;
-  const result = await run(sql, params);
-  return result.changes;
-}
-
-export async function deletePatient(id: number) {
-  const result = await run(`DELETE FROM patients WHERE id = ?`, [id]);
-  return result.changes;
-}
-
 export default {
   raw: rawDb,
   run,
   get,
   all,
-  createPatient,
-  getAllPatients,
-  getPatientById,
-  updatePatient,
-  deletePatient,
 };

@@ -38,11 +38,22 @@ export default function PatientsPage() {
 
     const router = useRouter();
 
-    // Collapse sidebar on small screens initially
+
     useEffect(() => {
-        if (window.innerWidth < 1024) {
-            setSidebarOpen(false);
-        }
+        const handleResize = () => {
+            if (window.innerWidth < 1024) {
+                setSidebarOpen(false);
+            } else {
+                setSidebarOpen(true);
+            }
+        };
+
+        window.addEventListener("resize", handleResize);
+
+
+        handleResize();
+
+        return () => window.removeEventListener("resize", handleResize);
     }, []);
 
     const handleLogout = () => {
@@ -114,7 +125,7 @@ export default function PatientsPage() {
     }, [user]);
 
     return (
-        <div className="flex min-h-screen bg-zinc-50">
+        <div className="flex min-h-screen ">
             {/* Sidebar */}
             <aside
                 className={`bg-zinc-900 text-white flex flex-col shadow-xl transition-all duration-300 h-screen fixed lg:static z-50 ${sidebarOpen ? "w-72" : "w-20"
@@ -178,7 +189,9 @@ export default function PatientsPage() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-6 lg:ml-0 ml-20">
+            <main className={`flex-1 p-6 transition-all duration-300     ${sidebarOpen ? "ml-72" : "ml-20"}
+    lg:ml-0
+  `}>
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold text-zinc-800">Patients</h1>
                     {user?.role === "admin" && (
