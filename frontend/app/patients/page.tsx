@@ -34,7 +34,7 @@ export default function PatientsPage() {
     const [formPatient, setFormPatient] = useState<Partial<Patient> | null>(null);
     const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [photoFile, setPhotoFile] = useState<File | null>(null);
+
 
     const router = useRouter();
 
@@ -91,7 +91,6 @@ export default function PatientsPage() {
             }
 
             setFormPatient(null);
-            setPhotoFile(null);
             fetchPatients();
         } catch (error) {
             console.error("Failed to save patient", error);
@@ -99,7 +98,11 @@ export default function PatientsPage() {
     };
 
     const editPatient = (patient: Patient) => {
-        setFormPatient(patient);
+        if (formPatient?.id === patient.id) {
+            setFormPatient(null);
+        } else {
+            setFormPatient(patient);
+        }
     };
 
     useEffect(() => {
@@ -135,7 +138,7 @@ export default function PatientsPage() {
                 {/* Selected Patient Info */}
                 {selectedPatient && (
                     <div
-                        className={`mt-6 p-4 bg-zinc-800 rounded-lg animate-fadeIn ${!sidebarOpen && "hidden"
+                        className={`mt-6 p-4 m-4 bg-zinc-800 rounded-lg animate-fadeIn ${!sidebarOpen && "hidden"
                             }`}
                     >
                         <div className="flex flex-col items-center">
@@ -180,7 +183,14 @@ export default function PatientsPage() {
                     <h1 className="text-2xl font-bold text-zinc-800">Patients</h1>
                     {user?.role === "admin" && (
                         <button
-                            onClick={() => setFormPatient({})}
+                            onClick={() => {
+
+                                if (formPatient && !formPatient.id) {
+                                    setFormPatient(null);
+                                } else {
+                                    setFormPatient({});
+                                }
+                            }}
                             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
                         >
                             <PlusCircle size={18} /> Add Patient
@@ -237,11 +247,6 @@ export default function PatientsPage() {
                                     setFormPatient({ ...formPatient, dob: e.target.value })
                                 }
                             />
-                            <input
-                                type="file"
-                                className="border p-2 rounded focus:ring-2 focus:ring-blue-300"
-                                onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                            />
                         </div>
                         <div className="mt-4 flex gap-2">
                             <button
@@ -253,7 +258,6 @@ export default function PatientsPage() {
                             <button
                                 onClick={() => {
                                     setFormPatient(null);
-                                    setPhotoFile(null);
                                 }}
                                 className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition"
                             >
@@ -273,7 +277,7 @@ export default function PatientsPage() {
                                     <th className="px-4 py-2 text-left">Name</th>
                                     <th className="px-4 py-2 text-left">Email</th>
                                     <th className="px-4 py-2 text-left">Phone</th>
-                                    <th className="px-4 py-2 text-left">Date of Birth</th>
+
                                     {user?.role === "admin" && (
                                         <th className="px-4 py-2 text-center">Actions</th>
                                     )}
@@ -301,11 +305,7 @@ export default function PatientsPage() {
                                                 <Phone size={16} /> {patient.phoneNumber}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-2">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar size={16} /> {patient.dob}
-                                            </div>
-                                        </td>
+
                                         {user?.role === "admin" && (
                                             <td className="px-4 py-2 flex gap-2 justify-center">
                                                 <button
