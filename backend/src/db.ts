@@ -2,7 +2,7 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import bcrypt from 'bcrypt';
 
-const DB_FILE = path.join(__dirname, 'patients.sqlite3');
+const DB_FILE = process.env.DB_FILE || path.join(__dirname, 'patients.sqlite3');
 
 const sqlite = sqlite3.verbose();
 const rawDb = new sqlite.Database(DB_FILE);
