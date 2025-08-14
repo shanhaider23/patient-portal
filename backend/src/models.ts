@@ -1,4 +1,3 @@
-// src/models.ts
 export type Role = 'admin' | 'user';
 
 export interface User {

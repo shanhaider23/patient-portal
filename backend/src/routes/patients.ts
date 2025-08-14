@@ -1,4 +1,3 @@
-// src/routes/patients.ts
 import express from 'express';
 import db from '../db';
 import { authenticateToken } from '../middleware/auth';
